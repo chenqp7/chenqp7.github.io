@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>chenqp7&#39;s Blogs</title>
+  <subtitle>Tech Notes</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://chenqp7.github.io/"/>
+  <updated>2016-04-25T15:59:45.000Z</updated>
+  <id>http://chenqp7.github.io/</id>
+  
+  <author>
+    <name>Qiangpu Chen</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Ubuntu命令行连接VPN并自动设置所有流量通过VPN</title>
+    <link href="http://chenqp7.github.io/2016/04/25/"/>
+    <id>http://chenqp7.github.io/2016/04/25/</id>
+    <published>2016-04-25T12:13:07.000Z</published>
+    <updated>2016-04-25T15:59:45.000Z</updated>
+    
+    <content type="html">&lt;h1 id=&quot;摘要&quot;&gt;&lt;a href=&quot;#摘要&quot; class=&quot;headerlink&quot; title=&quot;摘要&quot;&gt;&lt;/a&gt;摘要&lt;/h1&gt;&lt;p&gt;本文主要记录&lt;a href=&quot;http://blog.csdn.net/chenqp7&quot; title=&quot;chenqp7的博客&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;chenqp7&lt;/a&gt;于2016-01-12在ubuntu 14.04 LTS系统下校园网环境中使用apt-get的&lt;strong&gt;purge&lt;/strong&gt;命令卸载&lt;strong&gt;Network-Manager&lt;/strong&gt;，同时手动设置&lt;strong&gt;interfaces&lt;/strong&gt;文件，并使用&lt;strong&gt;ifup&lt;/strong&gt;配置网络；然后设置PPTP连接&lt;strong&gt;VPN&lt;/strong&gt;并设置路由&lt;strong&gt;route使所有网络流量走VPN&lt;/strong&gt;的具体过程：&lt;/p&gt;
+&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;purge卸载network-manager网络管理包以使手动配置生效&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;编辑 &lt;em&gt;interfaces&lt;/em&gt; 文件使ifup能够配置网卡&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;确认安装VPN客户端&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;命令行下创建pptp账号并连接VPN服务器&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;使用 pon 和 poff 命令连接或断开pptp账号&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;命令行设置默认路由测试所有流量能否成功走VPN通道&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;设置 &lt;em&gt;ip-up&lt;/em&gt; 文件实现连接VPN时自动修改默认路由&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&quot;目录&quot;&gt;&lt;a href=&quot;#目录&quot; class=&quot;headerlink&quot; title=&quot;目录&quot;&gt;&lt;/a&gt;目录&lt;/h2&gt;&lt;p&gt;[TOC] &lt;/p&gt;
+&lt;h2 id=&quot;手动配置网卡&quot;&gt;&lt;a href=&quot;#手动配置网卡&quot; class=&quot;headerlink&quot; title=&quot;手动配置网卡&quot;&gt;&lt;/a&gt;手动配置网卡&lt;/h2&gt;&lt;p&gt;手动配置网卡而不使用&lt;em&gt;Network Manager&lt;/em&gt; (NM)的好处是当用户是通过SSH远程控制该机器时，也能够控制以及配置网络。&lt;/p&gt;
+&lt;h3 id=&quot;停止NM服务并停止其对网络的控制&quot;&gt;&lt;a href=&quot;#停止NM服务并停止其对网络的控制&quot; class=&quot;headerlink&quot; title=&quot;停止NM服务并停止其对网络的控制&quot;&gt;&lt;/a&gt;&lt;a href=&quot;https://help.ubuntu.com/community/NetworkManager#Disabling_NetworkManager&quot; title=&quot;Disabling NetworkManager&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;停止NM服务并停止其对网络的控制&lt;/a&gt;&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;由于对于Ubuntu等Linux系统，网络管理仅允许一个软件进行控制。Ubuntu 14.04 LTS 桌面版默认安装了NM，接管了网络控制。所以最好先停止NM服务，并设定手动控制网络。具体请参考 &lt;a href=&quot;http://blog.csdn.net/anhuidelinger/article/details/17584299&quot; title=&quot;anhuidelinger的专栏&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt; CSDN博客 &lt;/a&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;首先关闭NM服务，并设置手动配置网络&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo stop network-manager&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;built_in&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;string&quot;&gt;&quot;manual&quot;&lt;/span&gt; | sudo tee /etc/init/network-manager.override&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h3 id=&quot;手动配置interfaces文件设置ip地址&quot;&gt;&lt;a href=&quot;#手动配置interfaces文件设置ip地址&quot; class=&quot;headerlink&quot; title=&quot;手动配置interfaces文件设置ip地址&quot;&gt;&lt;/a&gt;&lt;a href=&quot;http://blog.csdn.net/anhuidelinger/article/details/17584299&quot; title=&quot;anhuidelinger的专栏&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;手动配置interfaces文件设置ip地址&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;配置&lt;code&gt;interfaces&lt;/code&gt;文件以使&lt;code&gt;ifup&lt;/code&gt;生效&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo vi /etc/network/interfaces&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# Vim中使用下列方案替换文件内容，方案二选一即可&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# 方案1：配置静态地址&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;auto eth0&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;iface eth0 inet static&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;address xxx.xxx.xxx.xxx &lt;span class=&quot;comment&quot;&gt;#IP地址&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;netmask xxx.xxx.xxx.xxx &lt;span class=&quot;comment&quot;&gt;#子网掩码&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;gateway xxx.xxx.xxx.xxx &lt;span class=&quot;comment&quot;&gt;#网关&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;#方案2：配置动态地址(DHCP)&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;auto eth0&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;iface eth0 inet dhcp&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ul&gt;
+&lt;li&gt;配置DNS服务器地址（若使用&lt;code&gt;ifup&lt;/code&gt;则可不进行此步骤）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo vi /etc/resolv.conf&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# Vim中改为如下内容：&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;nameserver xxx.xxx.xxx.xxx &lt;span class=&quot;comment&quot;&gt;#希望修改成的DNS&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;nameserver xxx.xxx.xxx.xxx &lt;span class=&quot;comment&quot;&gt;#希望修改成的DNS&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h3 id=&quot;彻底卸载NM并配置网卡&quot;&gt;&lt;a href=&quot;#彻底卸载NM并配置网卡&quot; class=&quot;headerlink&quot; title=&quot;彻底卸载NM并配置网卡&quot;&gt;&lt;/a&gt;&lt;a href=&quot;http://askubuntu.com/questions/249944/how-can-i-completely-remove-networkmanager&quot; title=&quot;How can I completely remove NetworkManager?&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;彻底卸载NM并配置网卡&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;通过apt-get的purge来卸载软件并删除配置文件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight sh&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo apt-get purge network-manager&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;``` &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- 最后通过`ifup`配置网卡，并重启网络服务&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;```fsh&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;sudo ifup eth0&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;sudo /etc/init.d/networking restart&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h2 id=&quot;配置PPTP客户端并设置流量自动通过VPN&quot;&gt;&lt;a href=&quot;#配置PPTP客户端并设置流量自动通过VPN&quot; class=&quot;headerlink&quot; title=&quot;配置PPTP客户端并设置流量自动通过VPN&quot;&gt;&lt;/a&gt;配置PPTP客户端并设置流量自动通过VPN&lt;/h2&gt;&lt;p&gt;首先设置VPN连接并测试。而在某些使用情况下需要将流量先转发到VPN再访问网络，即将本机的所有网络请求的流量均先通过VPN转发出去，如需要使用VPN来访问英特网。做到这点的方法是将默认路由改为VPN。&lt;/p&gt;
+&lt;h3 id=&quot;创建VPN账号并测试连接&quot;&gt;&lt;a href=&quot;#创建VPN账号并测试连接&quot; class=&quot;headerlink&quot; title=&quot;创建VPN账号并测试连接&quot;&gt;&lt;/a&gt;&lt;a href=&quot;http://m.blog.sina.com.cn/s/blog_a04184c101010kp1.html#page=1&quot; title=&quot;Ubuntu命令行下VPN连接与使用&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;创建VPN账号并测试连接&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;安装VPN客户端&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo apt-get install pptp-linux&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ul&gt;
+&lt;li&gt;创建VPN账号并连接&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo pptpsetup --create tunnel_name --server xxx.xxx.xxx.xxx --username vpn_user --password vpn_psw --encrypt --start&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# --create 表示创建的连接（VPN账号）名称&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# --encrypt 表示该连接需要加密&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# --start 表示创建完成后立即连接&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ul&gt;
+&lt;li&gt;检查连接是否成功&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;ifconfig&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# 若有ppp0（或pppN，N为数字）的信息，则表示连接成功&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h3 id=&quot;bash测试流量转发到VPN上是否成功&quot;&gt;&lt;a href=&quot;#bash测试流量转发到VPN上是否成功&quot; class=&quot;headerlink&quot; title=&quot;bash测试流量转发到VPN上是否成功&quot;&gt;&lt;/a&gt;bash测试流量转发到VPN上是否成功&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;首先查看当前的路由表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;route -n&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# 若其中有iface为ppp0（0可为其他数字）的，也表示VPN连接成功&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# 记录第一行（默认路由）的Gateway为ddd.ddd.ddd.ddd，以备用&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ul&gt;
+&lt;li&gt;添加VPN服务为默认路由，并删除原默认路由&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo route add default dev ppp0&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;sudo route del default gw ddd.ddd.ddd.ddd&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ul&gt;
+&lt;li&gt;测试网络连接，若成功，则进行下一步&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;设置VPN连接后流量自动通过VPN转发&quot;&gt;&lt;a href=&quot;#设置VPN连接后流量自动通过VPN转发&quot; class=&quot;headerlink&quot; title=&quot;设置VPN连接后流量自动通过VPN转发&quot;&gt;&lt;/a&gt;设置VPN连接后流量自动通过VPN转发&lt;/h3&gt;&lt;p&gt;做到上步为止，已经能够正常使用网络，但VPN一旦关闭，再重新连接，会发现路由需要重新配置。故需要配置自动添加默认路由。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;http://m.blog.sina.com.cn/s/blog_a04184c101010kp1.html#page=1&quot; title=&quot;Ubuntu命令行下VPN连接与使用&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;断开VPN连接，以备测试自动设置&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo poff tunnel_name&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# tunnel_name为之前新建的VPN连接名称&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ul&gt;
+&lt;li&gt;编辑&lt;code&gt;ip-up&lt;/code&gt;文件实现自动设置&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo vi /etc/ppp/ip-up&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# Vim --INSERT--&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# if VPN was connected, config default route to VPN&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;string&quot;&gt;&quot;&lt;span class=&quot;variable&quot;&gt;$1&lt;/span&gt;&quot;&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;in&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  ppp0)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;          /sbin/route add default dev ppp0&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;          ;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  *)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;esac&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ul&gt;
+&lt;li&gt;连接VPN并测试是否能够直接访问网络&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo pon tunnel_name&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;至此应该可以简单地通过一句命令访问网络，若希望能够开机自动连接VPN，则将上面的命令添加到&lt;code&gt;/etc/rc.local&lt;/code&gt;文件中即可。&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;本文为&lt;a href=&quot;http://blog.csdn.net/chenqp7&quot; title=&quot;chenqp7的博客&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;chenqp7&lt;/a&gt;原创博文，转载请注明出处：&lt;br&gt;&lt;a href=&quot;http://blog.csdn.net/chenqp7/article/details/50505924&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://blog.csdn.net/chenqp7/article/details/50505924&lt;/a&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;test mathjax&lt;/p&gt;
+&lt;p&gt;一条直线 $y=ax+b$ 使这几个点&lt;/p&gt;
+&lt;p&gt;一系列点$(x_i,y_i)(i=1,2,…n,n\ge 3)$&lt;/p&gt;
+&lt;p&gt;\begin{aligned}&lt;br&gt;w&amp;amp;=ax^2+bxy+cy^2\\&lt;br&gt; &amp;amp;=a(x+\frac{by}{2a})^2+(c-\dfrac{(by)^2}{4a})\\&lt;br&gt; &amp;amp;=\frac{1}{4a}[4a^2(x+\frac{by}{2a})^2+(4ac-b^2)y^2]&lt;br&gt;\end{aligned}&lt;/p&gt;
+&lt;p&gt;$$&lt;br&gt;        \begin{matrix}&lt;br&gt;        1 &amp;amp; x &amp;amp; x^2 \\&lt;br&gt;        1 &amp;amp; y &amp;amp; y^2 \\&lt;br&gt;        1 &amp;amp; z &amp;amp; z^2 \\&lt;br&gt;        \end{matrix}&lt;br&gt;$$&lt;/p&gt;
+&lt;p&gt;$$\frac{\partial u}{\partial t}&lt;br&gt;= h^2 \left( \frac{\partial^2 u}{\partial x^2} +&lt;br&gt;\frac{\partial^2 u}{\partial y^2} +&lt;br&gt;\frac{\partial^2 u}{\partial z^2}\right)$$&lt;/p&gt;
+&lt;p&gt;This equation &lt;span&gt;$\cos 2\theta = \cos^2 \theta - \sin^2 \theta =  2 \cos^2 \theta - 1$&lt;/span&gt;&lt;!-- Has MathJax --&gt; is inline.&lt;/p&gt;
+&lt;span&gt;$$\begin{aligned}
+\dot{x} &amp;amp; = \sigma(y-x) \\
+\dot{y} &amp;amp; = \rho x - y - xz \\
+\dot{z} &amp;amp; = -\beta z + xy
+\end{aligned}$$&lt;/span&gt;&lt;!-- Has MathJax --&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;摘要&quot;&gt;&lt;a href=&quot;#摘要&quot; class=&quot;headerlink&quot; title=&quot;摘要&quot;&gt;&lt;/a&gt;摘要&lt;/h1&gt;&lt;p&gt;本文主要记录&lt;a href=&quot;http://blog.csdn.net/chenqp7&quot; title=&quot;chenqp7的博客&quot;&gt;chenqp7&lt;/a&gt;于2016-01-12在ubuntu 14.04 LTS系统下校园网环境中使用apt-get的&lt;strong&gt;purge&lt;/strong&gt;命令卸载&lt;strong&gt;Network-Manager&lt;/strong&gt;，同时手动设置&lt;strong&gt;interfaces&lt;/strong&gt;文件，并使用&lt;strong&gt;ifup&lt;/strong&gt;配置网络；然后设置PPTP连接&lt;strong&gt;VPN&lt;/strong&gt;并设置路由&lt;strong&gt;route使所有网络流量走VPN&lt;/strong&gt;的具体过程：&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="Environment" scheme="http://chenqp7.github.io/categories/Environment/"/>
+    
+    
+      <category term="vpn" scheme="http://chenqp7.github.io/tags/vpn/"/>
+    
+      <category term="ubuntu" scheme="http://chenqp7.github.io/tags/ubuntu/"/>
+    
+      <category term="trick" scheme="http://chenqp7.github.io/tags/trick/"/>
+    
+  </entry>
+  
+</feed>
