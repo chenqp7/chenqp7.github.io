@@ -88,7 +88,7 @@
 <meta property="og:url" content="http://chenqp7.github.io/2016/04/25/index.html">
 <meta property="og:site_name" content="chenqp7's Blogs">
 <meta property="og:description" content="摘要本文主要记录chenqp7于2016-01-12在ubuntu 14.04 LTS系统下校园网环境中使用apt-get的purge命令卸载Network-Manager，同时手动设置interfaces文件，并使用ifup配置网络；然后设置PPTP连接VPN并设置路由route使所有网络流量走VPN的具体过程：">
-<meta property="og:updated_time" content="2016-04-25T15:59:45.000Z">
+<meta property="og:updated_time" content="2016-04-25T16:32:34.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Ubuntu命令行连接VPN并自动设置所有流量通过VPN">
 <meta name="twitter:description" content="摘要本文主要记录chenqp7于2016-01-12在ubuntu 14.04 LTS系统下校园网环境中使用apt-get的purge命令卸载Network-Manager，同时手动设置interfaces文件，并使用ifup配置网络；然后设置PPTP连接VPN并设置路由route使所有网络流量走VPN的具体过程：">
@@ -441,19 +441,6 @@
 <p>至此应该可以简单地通过一句命令访问网络，若希望能够开机自动连接VPN，则将上面的命令添加到<code>/etc/rc.local</code>文件中即可。</p>
 <hr>
 <p>本文为<a href="http://blog.csdn.net/chenqp7" title="chenqp7的博客" target="_blank" rel="external">chenqp7</a>原创博文，转载请注明出处：<br><a href="http://blog.csdn.net/chenqp7/article/details/50505924" target="_blank" rel="external">http://blog.csdn.net/chenqp7/article/details/50505924</a></p>
-<hr>
-<p>test mathjax</p>
-<p>一条直线 $y=ax+b$ 使这几个点</p>
-<p>一系列点$(x_i,y_i)(i=1,2,…n,n\ge 3)$</p>
-<p>\begin{aligned}<br>w&amp;=ax^2+bxy+cy^2\\<br> &amp;=a(x+\frac{by}{2a})^2+(c-\dfrac{(by)^2}{4a})\\<br> &amp;=\frac{1}{4a}[4a^2(x+\frac{by}{2a})^2+(4ac-b^2)y^2]<br>\end{aligned}</p>
-<p>$$<br>        \begin{matrix}<br>        1 &amp; x &amp; x^2 \\<br>        1 &amp; y &amp; y^2 \\<br>        1 &amp; z &amp; z^2 \\<br>        \end{matrix}<br>$$</p>
-<p>$$\frac{\partial u}{\partial t}<br>= h^2 \left( \frac{\partial^2 u}{\partial x^2} +<br>\frac{\partial^2 u}{\partial y^2} +<br>\frac{\partial^2 u}{\partial z^2}\right)$$</p>
-<p>This equation <span>$\cos 2\theta = \cos^2 \theta - \sin^2 \theta =  2 \cos^2 \theta - 1$</span><!-- Has MathJax --> is inline.</p>
-<span>$$\begin{aligned}
-\dot{x} &amp; = \sigma(y-x) \\
-\dot{y} &amp; = \rho x - y - xz \\
-\dot{z} &amp; = -\beta z + xy
-\end{aligned}$$</span><!-- Has MathJax -->
 
       
     </div>
@@ -815,24 +802,7 @@
     
       
       <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
-      <script src="/js/src/hook-duoshuo.js"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
-</script>
-
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Queue(function() {
-    var all = MathJax.Hub.getAllJax(), i;
-    for(i=0; i < all.length; i += 1) {
-      all[i].SourceElement().parentNode.className += ' has-jax';
-    }
-  });
-</script>
-
-<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
-<!-- End: Injected MathJax -->
-<!-- hexo-inject:end -->
+      <script src="/js/src/hook-duoshuo.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
     
   
 
